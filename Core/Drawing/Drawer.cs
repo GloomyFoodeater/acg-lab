@@ -11,6 +11,7 @@ namespace Core;
 public class Drawer
 {
     private readonly BufferedBitmap _buffer;
+    private readonly LightingPhong _lightingPhong = new();
 
     public Drawer(Bitmap bitmap) => _buffer = new BufferedBitmap(bitmap);
 
@@ -188,7 +189,7 @@ public class Drawer
             var b = v1 - v0;
             var isVisible = a.X * b.Y - a.Y * b.X > 0;
             if (!isVisible) return;
-            
+
             var vw0 = model.WorldVertices[face.Indeces[0].V];
             var vw1 = model.WorldVertices[face.Indeces[1].V];
             var vw2 = model.WorldVertices[face.Indeces[2].V];
@@ -224,19 +225,9 @@ public class Drawer
             var isVisible = a.X * b.Y - a.Y * b.X > 0;
             if (!isVisible) return;
 
-            var vw0 = model.WorldVertices[face.Indeces[0].V];
-            var vw1 = model.WorldVertices[face.Indeces[1].V];
-            var vw2 = model.WorldVertices[face.Indeces[2].V];
-
-            var normal = Vector3.Normalize(Vector3.Cross(vw2 - vw0, vw1 - vw0));
-            var intensity = Vector3.Dot(normal, -model.Context.LightDir);
-            var color = Color.FromArgb(
-                (byte)Abs(intensity * baseColor.R),
-                (byte)Abs(intensity * baseColor.G),
-                (byte)Abs(intensity * baseColor.B));
-
             ScanlineTriangle(v0, v1, v2, p =>
             {
+                // TODO: Реализовать это
                 throw new NotImplementedException();
             });
         });
