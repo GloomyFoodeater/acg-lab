@@ -10,7 +10,7 @@ public class ObjParser
     private readonly ModelContext _context;
     public ObjParser(ModelContext context) => _context = context;
 
-    private static Vector4 ParseVertice(string[] lexems)
+    private static Vector3 ParseVertice(string[] lexems)
     {
         if (lexems.Length < 4) throw new IOException("Invalid geometric vertices syntax");
 
@@ -18,7 +18,7 @@ public class ObjParser
         var y = float.Parse(lexems[2], InvariantCulture);
         var z = float.Parse(lexems[3], InvariantCulture);
 
-        return new Vector4(x, y, z, 1);
+        return new Vector3(x, y, z);
     }
 
     private static Vector3 ParseNormal(string[] lexems)
@@ -35,7 +35,7 @@ public class ObjParser
     // Перевод индексов вершин в файле в индексы списка заданной длины
     private static int ShiftIndex(int index, int length) => index > 0 ? index - 1 : length + index;
 
-    private static Face ParseFace(string[] lexems, List<Vector4> listV, List<Vector3> listVn)
+    private static Face ParseFace(string[] lexems, List<Vector3> listV, List<Vector3> listVn)
     {
         if (lexems.Length > 4) throw new NotSupportedException("Faces can only be triangles");
         if (lexems.Length < 4) throw new IOException("Invalid face syntax");
@@ -64,7 +64,7 @@ public class ObjParser
     public Model Parse(string path)
     {
         var listF = new List<Face>();
-        var listV = new List<Vector4>();
+        var listV = new List<Vector3>();
         var listVn = new List<Vector3>();
 
         string? line;

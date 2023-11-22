@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using System.Drawing;
 using System.Numerics;
+using System.Reflection.Metadata.Ecma335;
 using Core.Elements;
 using static System.Math;
 using static Core.Utils.VectorMath;
@@ -90,7 +91,7 @@ public class Drawer
         }
     }
 
-    private void ScanlineTriangle(Vector4 v0, Vector4 v1, Vector4 v2, Color color)
+    private void ScanlineTriangle(Vector3 v0, Vector3 v1, Vector3 v2, Func<Vector3, Color> getColor)
     {
         // Сортировка векторов так, чтобы v2.Y > v1.Y > v0.Y
         if (v0.Y > v2.Y) (v0, v2) = (v2, v0);
@@ -139,7 +140,7 @@ public class Drawer
             {
                 var z = az + (x - av.X) * kz;
                 if (_buffer.PutZValue(x, y, z))
-                    _buffer[x, y] = color;
+                    _buffer[x, y] = getColor(new(x, y, z));
             }
         }
     }
@@ -188,9 +189,9 @@ public class Drawer
             var isVisible = a.X * b.Y - a.Y * b.X > 0;
             if (!isVisible) return;
             
-            var vw0 = Vector4to3(model.WorldVertices[face.Indeces[0].V]);
-            var vw1 = Vector4to3(model.WorldVertices[face.Indeces[1].V]);
-            var vw2 = Vector4to3(model.WorldVertices[face.Indeces[2].V]);
+            var vw0 = model.WorldVertices[face.Indeces[0].V];
+            var vw1 = model.WorldVertices[face.Indeces[1].V];
+            var vw2 = model.WorldVertices[face.Indeces[2].V];
 
             var normal = Vector3.Normalize(Vector3.Cross(vw2 - vw0, vw1 - vw0));
             var intensity = Vector3.Dot(normal, -model.Context.LightDir);
@@ -199,7 +200,7 @@ public class Drawer
                 (byte)Abs(intensity * baseColor.G),
                 (byte)Abs(intensity * baseColor.B));
 
-            ScanlineTriangle(v0, v1, v2, color);
+            ScanlineTriangle(v0, v1, v2, _ => color);
         });
 
         _buffer.Flush();
@@ -207,7 +208,40 @@ public class Drawer
 
     public void DrawLab3(Model model)
     {
-        throw new NotImplementedException();
+        model.Recalculate(_buffer.Width, _buffer.Height);
+
+        var baseColor = model.Context.FlatShadingColor;
+
+        Parallel.ForEach(model.Faces, face =>
+        {
+            var v0 = model.ViewportVertices[face.Indeces[0].V];
+            var v1 = model.ViewportVertices[face.Indeces[1].V];
+            var v2 = model.ViewportVertices[face.Indeces[2].V];
+
+            // Отсечение невидимых граней
+            var a = v2 - v0;
+            var b = v1 - v0;
+            var isVisible = a.X * b.Y - a.Y * b.X > 0;
+            if (!isVisible) return;
+
+            var vw0 = model.WorldVertices[face.Indeces[0].V];
+            var vw1 = model.WorldVertices[face.Indeces[1].V];
+            var vw2 = model.WorldVertices[face.Indeces[2].V];
+
+            var normal = Vector3.Normalize(Vector3.Cross(vw2 - vw0, vw1 - vw0));
+            var intensity = Vector3.Dot(normal, -model.Context.LightDir);
+            var color = Color.FromArgb(
+                (byte)Abs(intensity * baseColor.R),
+                (byte)Abs(intensity * baseColor.G),
+                (byte)Abs(intensity * baseColor.B));
+
+            ScanlineTriangle(v0, v1, v2, p =>
+            {
+                throw new NotImplementedException();
+            });
+        });
+
+        _buffer.Flush();
     }
 
     public void DrawLab4(Model model)

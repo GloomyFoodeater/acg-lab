@@ -6,14 +6,18 @@ namespace Core.Elements;
 
 public partial class Model
 {
-    private readonly List<Vector4> _worldVertices;
-    private readonly List<Vector4> _observerVertices;
-    private readonly List<Vector4> _projectionVertices;
-    private readonly List<Vector4> _viewportVertices;
+    private readonly List<Vector3> _worldVertices;
+    private readonly List<Vector3> _observerVertices;
+    private readonly List<Vector3> _projectionVertices;
+    private readonly List<Vector3> _viewportVertices;
+
+    private readonly List<Vector3> _worldNormals;
+    private readonly List<Vector3> _observerNormals;
+    private readonly List<Vector3> _projectionNormals;
 
     public Model(
         ModelContext context,
-        List<Vector4> listV,
+        List<Vector3> listV,
         List<Vector3> listVn,
         List<Face> faces)
     {
@@ -25,7 +29,10 @@ public partial class Model
         _projectionVertices = new(listV);
         _viewportVertices = new(listV);
 
-        Normals = listVn;
+        ModelNormals = listVn;
+        _worldNormals = new(listVn);
+        _observerNormals = new(listVn);
+        _projectionNormals = new(listVn);
 
         Faces = faces;
     }
@@ -45,14 +52,19 @@ public partial class Model
     #endregion
 
     #region Координаты геометрических вершин в разных пространствах
-    public IReadOnlyList<Vector4> ModelVertices { get; }
-    public IReadOnlyList<Vector4> WorldVertices => _worldVertices;
-    public IReadOnlyList<Vector4> ObserverVertices => _observerVertices; 
-    public IReadOnlyList<Vector4> ProjectionVertices => _projectionVertices;
-    public IReadOnlyList<Vector4> ViewportVertices => _viewportVertices;
+    public IReadOnlyList<Vector3> ModelVertices { get; }
+    public IReadOnlyList<Vector3> WorldVertices => _worldVertices;
+    public IReadOnlyList<Vector3> ObserverVertices => _observerVertices;
+    public IReadOnlyList<Vector3> ProjectionVertices => _projectionVertices;
+    public IReadOnlyList<Vector3> ViewportVertices => _viewportVertices;
     #endregion
 
-    public IReadOnlyList<Vector3> Normals { get; }
+    #region Координаты нормалей вершин в разных пространствах
+    public IReadOnlyList<Vector3> ModelNormals { get; }
+    public IReadOnlyList<Vector3> WorldNormals => _worldNormals;
+    public IReadOnlyList<Vector3> ObserverNormals => _observerNormals;
+    public IReadOnlyList<Vector3> ProjectionNormals => _projectionNormals;
+    #endregion
 
     public IReadOnlyList<Face> Faces { get; }
 
@@ -90,6 +102,25 @@ public partial class Model
                 ProjectionVertices[i],
                 width,
                 height);
+
+            _worldNormals[i] = ToWorldFromModel(
+                ModelNormals[i],
+                ShiftX,
+                ShiftY,
+                RotationOfXInRadians,
+                RotationOfYInRadians,
+                Scale);
+            _observerNormals[i] = ToObserverFromWorld(
+                WorldNormals[i],
+                Context.Eye,
+                Context.Target,
+                Context.Up);
+            _projectionNormals[i] = ToProjectionFromObserver(
+                ObserverNormals[i],
+                Context.Fov,
+                aspect,
+                zNear,
+                Context.Zfar);
         });
     }
 }

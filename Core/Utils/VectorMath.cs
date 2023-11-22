@@ -1,5 +1,4 @@
 ﻿using System.Numerics;
-
 using static System.Numerics.Matrix4x4;
 
 namespace Core.Utils;
@@ -8,8 +7,8 @@ public static class VectorMath
 {
     public static Vector3 Vector4to3(Vector4 v) => new(v.X, v.Y, v.Z);
 
-    public static Vector4 ToWorldFromModel(
-        Vector4 modelVector,
+    public static Vector3 ToWorldFromModel(
+        Vector3 modelVector,
         float ShiftX,
         float ShiftY,
         float RotationOfXInRadians,
@@ -23,7 +22,7 @@ public static class VectorMath
             * CreateRotationZ(0)
             * CreateScale(Scale);
 
-        return Vector4.Transform(modelVector, worldMatrix);
+        return Vector3.Transform(modelVector, worldMatrix);
     }
 
     /// <summary>
@@ -32,8 +31,8 @@ public static class VectorMath
     /// <param name="eye">Позиция камеры в мировом пространстве</param>
     /// <param name="target">Позиция цели, на которую направлена камера</param>
     /// <param name="up">Вектор, направленный вертикально вверх с точки зрения камеры</param>
-    public static Vector4 ToObserverFromWorld(
-        Vector4 worldVector,
+    public static Vector3 ToObserverFromWorld(
+        Vector3 worldVector,
         Vector4 eye,
         Vector4 target,
         Vector4 up)
@@ -58,12 +57,12 @@ public static class VectorMath
             M43 = -Vector4.Dot(zAxis, eye),
             M44 = 1
         };
-        return Vector4.Transform(worldVector, viewMatrix);
+        return Vector3.Transform(worldVector, viewMatrix);
     }
 
     // Преобразование из пространства наблюдателя в пространство проекции.
-    public static Vector4 ToProjectionFromObserver(
-        Vector4 observerVector,
+    public static Vector3 ToProjectionFromObserver(
+        Vector3 observerVector,
         float fov,
         float aspect,
         float zNear,
@@ -90,12 +89,12 @@ public static class VectorMath
         projectionVector.Z /= projectionVector.W;
         projectionVector.W /= projectionVector.W;
 
-        return projectionVector;
+        return Vector4to3(projectionVector);
     }
 
     // Преобразование из пространства проекции в пространство окна просмотра.
-    public static Vector4 ToViewportFromProjection(
-        Vector4 projectionVector,
+    public static Vector3 ToViewportFromProjection(
+        Vector3 projectionVector,
         float width,
         float height)
     {
@@ -109,6 +108,6 @@ public static class VectorMath
             M44 = 1
         };
 
-        return Vector4.Transform(projectionVector, viewportMatrix);
+        return Vector3.Transform(projectionVector, viewportMatrix);
     }
 }

@@ -35,7 +35,7 @@ public partial class RenderForm : Form
     public RenderForm()
     {
         InitializeComponent();
-        LabComboBox.SelectedIndex = 0;
+        LabComboBox.SelectedIndex = 2;
         ResizeImage();
     }
 
