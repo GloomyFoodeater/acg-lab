@@ -33,13 +33,12 @@ public static class VectorMath
     /// <param name="up">Вектор, направленный вертикально вверх с точки зрения камеры</param>
     public static Vector3 ToObserverFromWorld(
         Vector3 worldVector,
-        Vector4 eye,
-        Vector4 target,
-        Vector4 up)
+        Vector3 eye,
+        Vector3 target,
+        Vector3 up)
     {
-        var zAxis = Vector4.Normalize(eye - target);
-        var v3Cross = Vector3.Cross(Vector4to3(up), Vector4to3(zAxis));
-        var xAxis = Vector4.Normalize(new Vector4(v3Cross, 1));
+        var zAxis = Vector3.Normalize(eye - target);
+        var xAxis = Vector3.Normalize(Vector3.Cross(up, zAxis));
         var yAxis = up;
         var viewMatrix = new Matrix4x4
         {
@@ -52,9 +51,9 @@ public static class VectorMath
             M31 = xAxis.Z,
             M32 = yAxis.Z,
             M33 = zAxis.Z,
-            M41 = -Vector4.Dot(xAxis, eye),
-            M42 = -Vector4.Dot(yAxis, eye),
-            M43 = -Vector4.Dot(zAxis, eye),
+            M41 = -Vector3.Dot(xAxis, eye),
+            M42 = -Vector3.Dot(yAxis, eye),
+            M43 = -Vector3.Dot(zAxis, eye),
             M44 = 1
         };
         return Vector3.Transform(worldVector, viewMatrix);

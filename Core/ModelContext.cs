@@ -12,9 +12,9 @@ namespace Core;
 /// <param name="LightDir">Вектор направление света</param>
 /// <param name="Fov">Угол обзора камеры в радианах</param>
 public record class ModelContext(
-    Vector4 Eye,
-    Vector4 Target,
-    Vector4 Up,
+    Vector3 Eye,
+    Vector3 Target,
+    Vector3 Up,
     Vector3 LightDir,
     float Fov,
     int Zfar,

@@ -21,9 +21,9 @@ public partial class RenderForm : Form
     #endregion
 
     private readonly ModelContext _context = new(
-        Eye: new(0, 0, 10, 0),
-        Target: new(0, 0, -1, 0),
-        Up: new(0, 1, 0, 0),
+        Eye: new(0, 0, 10),
+        Target: new(0, 0, -1),
+        Up: new(0, 1, 0),
         LightDir: new(0, 0, 1),
         Fov: (float)(20 * PI / 180),
         Zfar: 100,
