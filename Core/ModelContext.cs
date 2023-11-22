@@ -1,4 +1,5 @@
-﻿using System.Numerics;
+﻿using System.Drawing;
+using System.Numerics;
 
 namespace Core;
 
@@ -16,5 +17,6 @@ public record class ModelContext(
     Vector4 Up,
     Vector3 LightDir,
     float Fov,
-    int Zfar);
+    int Zfar,
+    Color FlatShadingColor);
 

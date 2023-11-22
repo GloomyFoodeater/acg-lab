@@ -24,9 +24,10 @@ public partial class RenderForm : Form
         Eye: new(0, 0, 10, 0),
         Target: new(0, 0, -1, 0),
         Up: new(0, 1, 0, 0),
-        LightDir: new(0, 0, 0),
+        LightDir: new(0, 0, 1),
         Fov: (float)(20 * PI / 180),
-        Zfar: 100);
+        Zfar: 100,
+        FlatShadingColor: Color.FromArgb(120, 170, 255));
 
     private Drawer? _drawer;
     private Model? _model;

@@ -1,7 +1,9 @@
 ﻿using System.Diagnostics;
 using System.Drawing;
+using System.Numerics;
 using Core.Elements;
 using static System.Math;
+using static Core.Utils.VectorMath;
 
 namespace Core;
 
@@ -88,6 +90,60 @@ public class Drawer
         }
     }
 
+    private void ScanlineTriangle(Vector4 v1, Vector4 v2, Vector4 v3, Color color)
+    {
+        // Сортировка векторов так, чтобы v3.Y > v2.Y > v1.Y
+        if (v1.Y > v3.Y) (v1, v3) = (v3, v1);
+        if (v1.Y > v2.Y) (v1, v2) = (v2, v1);
+        if (v2.Y > v3.Y) (v2, v3) = (v3, v2);
+
+        // Векторы, коллениарные сторонам, нормы которых равны длине стороны, поделённую на длину проекции на Oy
+        var kv1 = (v3 - v1) / (v3.Y - v1.Y);
+        var kv2 = (v2 - v1) / (v2.Y - v1.Y);
+        var kv3 = (v3 - v2) / (v3.Y - v2.Y);
+
+        // Значения z-буффера для вершин треугольника
+        var kz1 = (v3.Z - v1.Z) / (v3.Y - v1.Y);
+        var kz2 = (v2.Z - v1.Z) / (v2.Y - v1.Y);
+        var kz3 = (v3.Z - v2.Z) / (v3.Y - v2.Y);
+
+        // Границы цикла по ординатам
+        var top = Max(0, (int)Ceiling(v1.Y));
+        var bottom = Min(_buffer.Height, (int)Ceiling(v3.Y));
+
+        // Цикл по ординатам
+        for (int y = top; y < bottom; y++)
+        {
+            // Крайние точки сканирующей линии
+            var av = v1 + (y - v1.Y) * kv1;
+            var bv = y < v2.Y ? v1 + (y - v1.Y) * kv2 : v2 + (y - v2.Y) * kv3;
+
+            // Значения z-буффера для крайних точек
+            var az = v1.Z + (y - v1.Y) * kz1;
+            var bz = y < v2.Y ? v1.Z + (y - v1.Y) * kz2 : v2.Z + (y - v2.Y) * kz3;
+
+            // Проход слева направо: сортировка так, чтобы bv.X > av.X
+            if (av.X > bv.X)
+            {
+                (av, bv) = (bv, av);
+                (az, bz) = (bz, az);
+            }
+
+            // Абсциссы крайних точек сканирующей линии
+            var left = Max(0, (int)Ceiling(av.X));
+            var right = Min(_buffer.Width, (int)Ceiling(bv.X));
+
+            // Цикл по абсциссам
+            var kz = (bz - az) / (bv.X - av.X);
+            for (int x = left; x < right; x++)
+            {
+                var z = az + (x - av.X) * kz;
+                if (_buffer.PutZValue(x, y, z))
+                    _buffer[x, y] = color;
+            }
+        }
+    }
+
     #endregion
 
     public void DrawLab1(Model model)
@@ -117,7 +173,30 @@ public class Drawer
 
     public void DrawLab2(Model model)
     {
-        throw new NotImplementedException();
+        model.Recalculate(_buffer.Width, _buffer.Height);
+
+        var baseColor = model.Context.FlatShadingColor;
+        Parallel.ForEach(model.Faces, face =>
+        {
+            var v0 = model.ViewportVertices[face.Indeces[0].V];
+            var v1 = model.ViewportVertices[face.Indeces[1].V];
+            var v2 = model.ViewportVertices[face.Indeces[2].V];
+
+            var vw0 = Vector4to3(model.WorldVertices[face.Indeces[0].V]);
+            var vw1 = Vector4to3(model.WorldVertices[face.Indeces[1].V]);
+            var vw2 = Vector4to3(model.WorldVertices[face.Indeces[2].V]);
+
+            var normal = Vector3.Normalize(Vector3.Cross(vw2 - vw0, vw1 - vw0));
+            var intensity = Vector3.Dot(normal, model.Context.LightDir);
+            var color = Color.FromArgb(
+                (byte)Abs(intensity * baseColor.R),
+                (byte)Abs(intensity * baseColor.G),
+                (byte)Abs(intensity * baseColor.B));
+
+            ScanlineTriangle(v0, v1, v2, color);
+        });
+
+        _buffer.Flush();
     }
 
     public void DrawLab3(Model model)
