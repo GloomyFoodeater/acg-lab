@@ -90,37 +90,37 @@ public class Drawer
         }
     }
 
-    private void ScanlineTriangle(Vector4 v1, Vector4 v2, Vector4 v3, Color color)
+    private void ScanlineTriangle(Vector4 v0, Vector4 v1, Vector4 v2, Color color)
     {
-        // Сортировка векторов так, чтобы v3.Y > v2.Y > v1.Y
-        if (v1.Y > v3.Y) (v1, v3) = (v3, v1);
+        // Сортировка векторов так, чтобы v2.Y > v1.Y > v0.Y
+        if (v0.Y > v2.Y) (v0, v2) = (v2, v0);
+        if (v0.Y > v1.Y) (v0, v1) = (v1, v0);
         if (v1.Y > v2.Y) (v1, v2) = (v2, v1);
-        if (v2.Y > v3.Y) (v2, v3) = (v3, v2);
 
         // Векторы, коллениарные сторонам, нормы которых равны длине стороны, поделённую на длину проекции на Oy
-        var kv1 = (v3 - v1) / (v3.Y - v1.Y);
-        var kv2 = (v2 - v1) / (v2.Y - v1.Y);
-        var kv3 = (v3 - v2) / (v3.Y - v2.Y);
+        var kv1 = (v2 - v0) / (v2.Y - v0.Y);
+        var kv2 = (v1 - v0) / (v1.Y - v0.Y);
+        var kv3 = (v2 - v1) / (v2.Y - v1.Y);
 
         // Значения z-буффера для вершин треугольника
-        var kz1 = (v3.Z - v1.Z) / (v3.Y - v1.Y);
-        var kz2 = (v2.Z - v1.Z) / (v2.Y - v1.Y);
-        var kz3 = (v3.Z - v2.Z) / (v3.Y - v2.Y);
+        var kz1 = (v2.Z - v0.Z) / (v2.Y - v0.Y);
+        var kz2 = (v1.Z - v0.Z) / (v1.Y - v0.Y);
+        var kz3 = (v2.Z - v1.Z) / (v2.Y - v1.Y);
 
         // Границы цикла по ординатам
-        var top = Max(0, (int)Ceiling(v1.Y));
-        var bottom = Min(_buffer.Height, (int)Ceiling(v3.Y));
+        var top = Max(0, (int)Ceiling(v0.Y));
+        var bottom = Min(_buffer.Height, (int)Ceiling(v2.Y));
 
         // Цикл по ординатам
         for (int y = top; y < bottom; y++)
         {
             // Крайние точки сканирующей линии
-            var av = v1 + (y - v1.Y) * kv1;
-            var bv = y < v2.Y ? v1 + (y - v1.Y) * kv2 : v2 + (y - v2.Y) * kv3;
+            var av = v0 + (y - v0.Y) * kv1;
+            var bv = y < v1.Y ? v0 + (y - v0.Y) * kv2 : v1 + (y - v1.Y) * kv3;
 
             // Значения z-буффера для крайних точек
-            var az = v1.Z + (y - v1.Y) * kz1;
-            var bz = y < v2.Y ? v1.Z + (y - v1.Y) * kz2 : v2.Z + (y - v2.Y) * kz3;
+            var az = v0.Z + (y - v0.Y) * kz1;
+            var bz = y < v1.Y ? v0.Z + (y - v0.Y) * kz2 : v1.Z + (y - v1.Y) * kz3;
 
             // Проход слева направо: сортировка так, чтобы bv.X > av.X
             if (av.X > bv.X)
@@ -182,12 +182,18 @@ public class Drawer
             var v1 = model.ViewportVertices[face.Indeces[1].V];
             var v2 = model.ViewportVertices[face.Indeces[2].V];
 
+            // Отсечение невидимых граней
+            var a = v2 - v0;
+            var b = v1 - v0;
+            var isVisible = a.X * b.Y - a.Y * b.X > 0;
+            if (!isVisible) return;
+            
             var vw0 = Vector4to3(model.WorldVertices[face.Indeces[0].V]);
             var vw1 = Vector4to3(model.WorldVertices[face.Indeces[1].V]);
             var vw2 = Vector4to3(model.WorldVertices[face.Indeces[2].V]);
 
             var normal = Vector3.Normalize(Vector3.Cross(vw2 - vw0, vw1 - vw0));
-            var intensity = Vector3.Dot(normal, model.Context.LightDir);
+            var intensity = Vector3.Dot(normal, -model.Context.LightDir);
             var color = Color.FromArgb(
                 (byte)Abs(intensity * baseColor.R),
                 (byte)Abs(intensity * baseColor.G),
